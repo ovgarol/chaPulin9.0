@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+chmod +x *.py
+
+FECHA=$(date)
+LOG=out_simPulsar.log
+
+echo "master_simPulsar"
+
+if [[ -e $LOG ]]; then
+  echo 'El archivo '$LOG' existe.'
+  echo 'El log de la simulacion actual sera añadido.'
+else
+  echo 'El archivo '$LOG' no existe.'
+  echo 'Historial de simulaciones '$LOG' creado el' $FECHA > $LOG
+fi
+
+#do
+  SIM=$1
+  mkdir out >> $LOG
+
+  if [[ -e $SIM ]]; then
+    echo '######' >> $LOG
+    echo 'Carpeta '$SIM 'existente... no se sobrescribirá.' >> $LOG
+    echo $SIM 'OMITIDO' >> $LOG
+    continue  
+  fi  
+
+  for fileDir in {out/data,out/img}
+  do
+    if [[ -e $fileDir ]]; then 
+      echo '################' >> $LOG
+      echo 'El directorio '$fileDir' existente... no se sobrescribirá.' >> $LOG
+      echo $SIM 'OMITIDO' >> $LOG
+      continue
+    else 
+      mkdir $fileDir
+    fi
+  done
+
+  FECHA2=$(date)
+
+  echo '################' >> $LOG
+  echo 'Carpeta '$SIM >> $LOG
+  echo "Inicio " $FECHA2  >> $LOG
+
+  ./parallel_simPulsar.py >> $LOG
+
+  FECHA3=$(date)
+  echo "Finalizado " $FECHA3 >> $LOG
+  mv out $SIM 
+  echo '######' >> $LOG
+  echo 'Apagando el equipo en' $(date) >> $LOG
+  echo 'FIN DE LA SIMULACION' >> $LOG
+  cp out_simPulsar.log $SIM
+  rm out_simPulsar.log
+
+  ./galParameters.py
+  cp *.pdf $SIM
+  cp sim_parametros.gal $SIM
+  rm sim_parametros.gal
+  rm *.pdf
+    
+  cp *.py $SIM
+
+  echo $SIM completo!!
+
+#done
+
+
+#shutdown -h now
